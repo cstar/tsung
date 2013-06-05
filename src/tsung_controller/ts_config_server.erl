@@ -313,6 +313,9 @@ handle_call({get_client_config, static, Host}, _From, State=#state{config=Config
             {NewUsers,Tail}=lists:split(Number,StaticUsers),
             {reply,{ok,NewUsers,StartDate},State#state{client_static_users=Done+1,start_date=StartDate,static_users=Tail}}
     end;
+
+handle_call(get_clients, _From, State=#state{config=Config})->
+    {reply, Config#config.clients, State};
 %% get randomly generated users
 handle_call({get_client_config, Host}, _From, State=#state{curcfg=OldCfg,total_weight=Total_Weight}) ->
     ?DebugF("get_client_config from ~p~n",[Host]),
