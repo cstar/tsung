@@ -54,7 +54,8 @@
           realm,
           soap_action, % for SOAP support
           tag, % for tagged requests
-          use_proxy = false
+          use_proxy = false,
+          chunk_parser
          }).
 
 -record(url,

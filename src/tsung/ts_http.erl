@@ -125,8 +125,10 @@ dump2str({#ts_request{param=HttpReq},HttpResp,UserId,Server,Size,Duration,Transa
 %% Args:    #http_request
 %% Returns: binary
 %%----------------------------------------------------------------------
-get_message(Req=#http_request{url=URL},#state_rcv{session=S}) ->
+get_message(Req=#http_request{url=URL, chunk_parser=ChunkParser},#state_rcv{session=S}) ->
     put(last_url,URL),
+    ?DebugF("chunk_parser is ~p", [ChunkParser]),
+    put(chunk_parser, ChunkParser),
     {get_message2(Req),S}.
 get_message2(Req=#http_request{method=get}) ->
     ts_http_common:http_no_body(?GET, Req);

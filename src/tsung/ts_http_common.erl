@@ -382,6 +382,7 @@ read_chunk(<<Char:1/binary, Data/binary>>, State=#state_rcv{session=Http}, Int, 
     <<C>> when $A=<C,C=<$F ->
         read_chunk(Data, State, 16*Int+10+(C-$A), Acc+1);
     <<?CR>> when Int>0 ->
+        maybe_parse(Data, get(chunk_parser)),
         read_chunk_data(Data, State, Int+3, Acc+1);
     <<?CR>> when Int==0, size(Data) == 3 -> %% should be the end of transfer
             ?DebugF("Finish tranfer chunk ~p~n", [binary_to_list(Data)]),
@@ -399,14 +400,20 @@ read_chunk(<<Char:1/binary, Data/binary>>, State=#state_rcv{session=Http}, Int, 
             {State#state_rcv{session= reset_session(Http), ack_done = true}, []}
     end.
 
-
+maybe_parse(_Data, undefined)->
+    ?DebugF("No parser for data", []),
+    ok;
+maybe_parse(Data, Mod)->
+    M = list_to_existing_atom(Mod),
+    ?DebugF("Activating parser ~p on ~p~n", [Mod, Data]),
+    M:chunk_parser(Data).
 %%----------------------------------------------------------------------
 %% Func: read_chunk_data/4
 %% Purpose: read 'Int' bytes of data
 %% Returns: {NewState= record(state_rcv), SockOpts}
 %%----------------------------------------------------------------------
 read_chunk_data(Data, State=#state_rcv{acc=[]}, Int, Acc) when size(Data) > Int->
-    ?DebugF("Read ~p bytes of chunk with size = ~p~n", [Int, size(Data)]),
+    ?DebugF("Read ~p bytes of chunk with size = ~p~nData:~p", [Int, size(Data), Data]),
     <<_NewData:Int/binary, Rest/binary >> = Data,
     read_chunk(Rest, State,  0, Int + Acc);
 read_chunk_data(Data, State=#state_rcv{acc=[],session=Http}, Int, Acc) -> % not enough data in buffer

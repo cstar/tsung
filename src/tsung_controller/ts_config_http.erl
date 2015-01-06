@@ -67,6 +67,10 @@ parse_config(Element = #xmlElement{name=http},
                    [] -> false;
                    _  -> true
                end,
+    %% Stream chunks to module
+    ChunkParser = ts_config:getAttr(string,Element#xmlElement.attributes,
+                             chunk_parser, undefined),
+
     %% Apache Tomcat applications need content-type informations to read post forms
     ContentType = ts_config:getAttr(string,Element#xmlElement.attributes,
                              content_type, "application/x-www-form-urlencoded"),
@@ -79,7 +83,8 @@ parse_config(Element = #xmlElement{name=http},
                             get_ims_date= Date,
                             content_type= ContentType,
                             body        = Contents,
-                            tag         = Config#config.tag},
+                            tag         = Config#config.tag,
+                            chunk_parser = ChunkParser},
     %% SOAP Support: Add SOAPAction header to the message
     Request2 = case lists:keysearch(soap,#xmlElement.name,
                                     Element#xmlElement.content) of
