@@ -690,25 +690,29 @@ ctrl_struct_impl({foreach_start,ForEachName,VarName,Filter}, DynVars) ->
 
 ctrl_struct_impl({foreach_end,ForEachName,VarName,Filter,Target}, DynVars) ->
     IterName=ts_utils:concat_atoms([ForEachName,'_iter']),
-    {ok,Iteration} = ts_dynvars:lookup(IterName,DynVars),
-    ?DebugF("Foreach (var=~p) iteration: ~p~n",[VarName,Iteration]),
-    case filter(ts_dynvars:lookup(VarName,DynVars),Filter) of
-        false ->
-            Msg= list_to_atom("error_foreach_"++atom_to_list(VarName)++"undef"),
-            ts_mon:add({ count, Msg}),
-            {next,DynVars};
-        VarValue when is_list(VarValue)->
-            ?DebugF("Foreach list found; value is ~p~n",[VarValue]),
-            case catch lists:nth(Iteration,VarValue) of
-                {'EXIT',_} -> % out of bounds, exit foreach loop
-                    ?LOGF("foreach ~p: last iteration done",[ForEachName],?DEB),
+    case ts_dynvars:lookup(IterName,DynVars) of
+        {ok,Iteration} ->
+            ?DebugF("Foreach (var=~p) iteration: ~p~n",[VarName,Iteration]),
+            case filter(ts_dynvars:lookup(VarName,DynVars),Filter) of
+                false ->
+                    Msg= list_to_atom("error_foreach_"++atom_to_list(VarName)++"undef"),
+                    ts_mon:add({ count, Msg}),
                     {next,DynVars};
-                Val ->
-                    TmpDynVars = ts_dynvars:set(ForEachName,Val,DynVars),
-                    NewDynVars = ts_dynvars:set(IterName,Iteration+1,TmpDynVars),
-                    {jump, Target ,NewDynVars}
+                VarValue when is_list(VarValue)->
+                    ?DebugF("Foreach list found; value is ~p~n",[VarValue]),
+                    case catch lists:nth(Iteration,VarValue) of
+                        {'EXIT',_} -> % out of bounds, exit foreach loop
+                            ?LOGF("foreach ~p: last iteration done",[ForEachName],?DEB),
+                            {next,DynVars};
+                        Val ->
+                            TmpDynVars = ts_dynvars:set(ForEachName,Val,DynVars),
+                            NewDynVars = ts_dynvars:set(IterName,Iteration+1,TmpDynVars),
+                            {jump, Target ,NewDynVars}
+                    end;
+                _ ->% not a list, don't loop
+                    {next,DynVars}
             end;
-        _ ->% not a list, don't loop
+        false -> % not a list, don't loop
             {next,DynVars}
     end.
 
