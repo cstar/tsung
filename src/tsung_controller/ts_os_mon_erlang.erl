@@ -237,10 +237,22 @@ mysqladmin_data({Port, Username, Password}) ->
 %% Func: get_os_data/1
 %%--------------------------------------------------------------------
 %% Return node cpu utilisation
-get_os_data(cpu) -> cpu_sup:util();
+get_os_data(cpu) -> 
+  case cpu_sup:util() of
+    {error, _} ->
+      0.0;
+    Value ->
+      Value
+  end;
 
 %% Return node cpu average load on 1 minute;
-get_os_data(load) -> cpu_sup:avg1()/256;
+get_os_data(load) -> 
+    case cpu_sup:avg1() of
+    {error, _} ->
+      0.0;
+    Value ->
+      Value/256
+  end;
 
 get_os_data(DataName) -> get_os_data(DataName,os:type()).
 
