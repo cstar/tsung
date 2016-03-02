@@ -104,7 +104,8 @@ all: man
 man: $(MANPAGE)
 
 %.1: %.1.sgml
-	docbook2man $< >/dev/null 2>&1
+	echo docbook2man $< >/dev/null 2>&1
+
 
 
 psimages: $(FIGURES_EPS) $(IMAGES_EPS) $(LOGOS_EPS)
