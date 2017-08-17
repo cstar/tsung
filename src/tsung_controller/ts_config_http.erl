@@ -91,12 +91,16 @@ parse_config(Element = #xmlElement{name=http},
                        Request
                end,
     PreviousHTTPServer = get_previous_http_server(Tab, CurS#session.id),
+    %% Should send cookies ?
+    ShouldCookies = ts_config:getAttr(atom,Element#xmlElement.attributes,
+                                              cookies, true),
+    ?LOGF("COOKIES CONFIGURES ~p", [ShouldCookies], ?INFO),
     %% client side cookies
     Cookies = parse_cookie(Element#xmlElement.content, []),
     %% Custom HTTP headers
     Headers=  parse_headers(Element#xmlElement.content,
                             Request2#http_request.headers),
-    Request3 = Request2#http_request{headers=Headers,cookie=Cookies},
+    Request3 = Request2#http_request{headers=Headers,cookie=Cookies, cookies=ShouldCookies},
     %% HTTP Authentication
     Request4 = case lists:keysearch(www_authenticate, #xmlElement.name,
                                Element#xmlElement.content) of

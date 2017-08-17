@@ -38,6 +38,7 @@
           headers = [],
           body = [],
           id = 0,
+          cookies=true,
           user_agent,
           oauth_consumer,
           oauth_access_token,

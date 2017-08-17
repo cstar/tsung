@@ -58,7 +58,7 @@ http_get(Args) ->
 %% Args: #http_request
 %%----------------------------------------------------------------------
 %% normal request
-http_no_body(Method,#http_request{url=URL, version=Version, cookie=Cookie,
+http_no_body(Method,#http_request{cookies=ShouldCookies, url=URL, version=Version, cookie=Cookie,
                               headers=Headers, user_agent=UA,
                               get_ims_date=undefined, soap_action=SOAPAction,
                               host_header=Host}=Req)->
@@ -71,13 +71,13 @@ http_no_body(Method,#http_request{url=URL, version=Version, cookie=Cookie,
                     authenticate(Req),
                     oauth_sign(Method,Req),
                     soap_action(SOAPAction),
-                    set_cookie_header({Cookie, Host, URL}),
+                    set_cookie_header({Cookie, Host, URL}, ShouldCookies),
                     headers(Headers),
                     ?CRLF]),
     ?DebugF("Headers~n-------------~n~s~n",[R]),
     R;
 %% if modified since request
-http_no_body(Method,#http_request{url=URL, version=Version, cookie=Cookie,
+http_no_body(Method,#http_request{cookies=ShouldCookies,  url=URL, version=Version, cookie=Cookie,
                              headers=Headers, user_agent=UA,
                              get_ims_date=Date, soap_action=SOAPAction,
                              host_header=Host}=Req) ->
@@ -91,7 +91,7 @@ http_no_body(Method,#http_request{url=URL, version=Version, cookie=Cookie,
                     soap_action(SOAPAction),
                     authenticate(Req),
                     oauth_sign(Method,Req),
-                    set_cookie_header({Cookie, Host, URL}),
+                    set_cookie_header({Cookie, Host, URL}, ShouldCookies),
                     headers(Headers),
                     ?CRLF]).
 
@@ -105,7 +105,7 @@ http_post(Args) ->
 %% Func: http_body/2
 %% Args: #http_request
 %%----------------------------------------------------------------------
-http_body(Method,#http_request{url=URL, version=Version,
+http_body(Method,#http_request{cookies=ShouldCookies, url=URL, version=Version,
                                cookie=Cookie, headers=Headers,
                                user_agent=UA, soap_action=SOAPAction,
                                content_type=ContentType,
@@ -121,7 +121,7 @@ http_body(Method,#http_request{url=URL, version=Version,
                authenticate(Req),
                soap_action(SOAPAction),
                oauth_sign(Method, Req),
-               set_cookie_header({Cookie, Host, URL}),
+               set_cookie_header({Cookie, Host, URL}, ShouldCookies),
                headers(Headers),
                ?CRLF
               ],
@@ -243,6 +243,17 @@ normalize_headers(Headers) ->
     lists:map(fun({Name, Value}) -> {string:to_lower(Name), Value} end, Headers).
 
 
+%%----------------------------------------------------------------------
+%% Function: set_cookie_header/2
+%% Args: {Cookies (list), Hostname (string), URL}, should_set
+%% Purpose: conditionally set Cookie: Header
+%%----------------------------------------------------------------------
+set_cookie_header(Cookies, true) -> 
+    ?LOG("Cookies are sent", ?DEB),
+    set_cookie_header(Cookies);
+set_cookie_header(_Cookies, false) -> 
+    ?LOG("Cookies are  NOT sent",  ?DEB),
+    [].
 %%----------------------------------------------------------------------
 %% Function: set_cookie_header/1
 %% Args: Cookies (list), Hostname (string), URL
