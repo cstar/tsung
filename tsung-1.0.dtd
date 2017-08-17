@@ -210,6 +210,7 @@ repeat | if | change_type | foreach | set_option | interaction | abort )*>
 
 <!ELEMENT http (oauth?, www_authenticate?, soap?, http_header*, add_cookie*)>
 <!ATTLIST http
+    cookies            (false | true) true
     contents           CDATA #IMPLIED
     contents_from_file CDATA #IMPLIED
     content_type       CDATA #IMPLIED
